@@ -6,8 +6,8 @@ import {
 
 export default function Home() {
   return (
-    <section className="h-full">
-      <div className="container mx-auto flex h-full items-center justify-center p-4">
+    <main>
+      <section className="container mx-auto flex h-full items-center justify-center p-4">
         <form className="flex w-full max-w-[512px] flex-col gap-8 rounded border border-gray-300 bg-white p-16 text-gray-900">
           <h1 className="text-center text-2xl font-bold">Sign in</h1>
           <div className="flex flex-col gap-2">
@@ -45,7 +45,7 @@ export default function Home() {
             Incorrect username or password
           </p>
         </form>
-      </div>
-    </section>
+      </section>
+    </main>
   );
 }
