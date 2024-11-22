@@ -7,7 +7,7 @@ import Link from "next/link";
 
 export default function Aside() {
   return (
-    <aside className="grid w-64 grid-rows-[auto_auto_1fr] gap-4 rounded border border-gray-300 p-4">
+    <aside className="grid h-[799px] w-64 grid-rows-[auto_auto_1fr] gap-4 rounded border border-gray-300 p-4">
       <button
         type="button"
         className="flex w-full items-center gap-3 justify-self-start rounded bg-gray-300 p-[10px]"
