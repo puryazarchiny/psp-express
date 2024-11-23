@@ -1,4 +1,9 @@
+// node_modules
 import { HeartIcon } from "@heroicons/react/16/solid";
+
+// ################################################################
+// # Component
+// ################################################################
 
 export default function Footer() {
   return (

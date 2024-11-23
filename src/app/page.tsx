@@ -1,31 +1,45 @@
 "use client";
 
-import {
-  ExclamationCircleIcon,
-  EyeIcon,
-  EyeSlashIcon,
-} from "@heroicons/react/16/solid";
+// node_modules
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
+// src
+import FormErrors from "@/components/FormErrors";
+import Input from "@/components/Input";
+import { useAuth } from "@/contexts";
 import { User } from "@/types";
 
-const passwords = {
-  1: "admin",
-  2: "user",
-};
+// ################################################################
+// # Component
+// ################################################################
 
 export default function Login() {
+  // States
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<
-    "username" | "password" | "both" | "fetch" | ""
-  >("");
+    "username" | "password" | "both" | "fetch" | null
+  >(null); // Type of errors
 
+  // Contexts
+  const { setRole } = useAuth();
+
+  // Navigation
   const router = useRouter();
 
+  // Constants
+  const passwords = {
+    1: "admin", // user with id 1 is admin
+    2: "user", // user with id 2 is normal user
+  };
+
+  // ################################################################
+  // # Functions
+  // ################################################################
+
+  // Set type of error
   const isError = () => {
     let error = false;
 
@@ -46,6 +60,7 @@ export default function Login() {
     return error;
   };
 
+  // Submit form
   const handleOnSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -54,17 +69,30 @@ export default function Login() {
     }
 
     try {
-      setError("");
+      setError(null);
       setIsLoading(true);
 
+      // Fetch users
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`);
       const data: User[] = await response.json();
 
+      // Check if user exists
       const [user] = data.filter(
         (user) => user.username.toLowerCase() === username,
       );
 
+      // Authenticate user
       if (user && password === passwords[user.id as keyof typeof passwords]) {
+        /**
+         * All Next.js components(client or server) are first rendered
+         * in the server and localStorage is not available in server side.
+         */
+        if (!(typeof window === "undefined")) {
+          localStorage.setItem("id", user.id.toString());
+        }
+
+        setRole(user.id === 1 ? "Admin" : "User"); // id 1 is admin and id 2 is user
+
         router.push("/dashboard");
       } else {
         throw new Error("fetch");
@@ -73,12 +101,14 @@ export default function Login() {
       if (error instanceof Error) {
         setError(error.message as "fetch");
       }
-
-      console.error(error);
     } finally {
       setIsLoading(false);
     }
   };
+
+  // ################################################################
+  // # JSX
+  // ################################################################
 
   return (
     <section className="container mx-auto flex h-full items-center justify-center p-4">
@@ -88,55 +118,23 @@ export default function Login() {
       >
         <h1 className="text-center text-2xl font-bold">Sign in</h1>
 
-        {/* Username */}
-        <div className="flex flex-col gap-2">
-          <label htmlFor="username">Username</label>
-          <input
-            type="text"
-            name="username"
-            id="username"
-            value={username}
-            className="rounded border-2 border-gray-300 p-2 outline-sky-500"
-            onChange={(e) => setUsername(e.target.value.toLowerCase())}
-          />
-          {(error === "username" || error === "both") && (
-            <div className="flex items-center gap-2">
-              <ExclamationCircleIcon className="h-4 w-4 text-red-500" />
-              <p className="text-red-500">Please fill out this field</p>
-            </div>
-          )}
-        </div>
+        <Input
+          type="text"
+          label="Username"
+          name="username"
+          username={username}
+          setUsername={setUsername}
+          error={error}
+        />
 
-        {/* Password */}
-        <div className="relative flex flex-col gap-2">
-          <label htmlFor="password">Password</label>
-          <input
-            type={showPassword ? "text" : "password"}
-            name="password"
-            id="password"
-            value={password}
-            className="rounded border-2 border-gray-300 p-2 outline-sky-500"
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          {!showPassword && (
-            <EyeIcon
-              className="absolute right-2 top-[42px] h-6 w-6 cursor-pointer text-gray-500"
-              onClick={() => setShowPassword(true)}
-            />
-          )}
-          {showPassword && (
-            <EyeSlashIcon
-              className="absolute right-2 top-[42px] h-6 w-6 cursor-pointer text-gray-500"
-              onClick={() => setShowPassword(false)}
-            />
-          )}
-          {(error === "password" || error === "both") && (
-            <div className="flex items-center gap-2">
-              <ExclamationCircleIcon className="h-4 w-4 text-red-500" />
-              <p className="text-red-500">Please fill out this field</p>
-            </div>
-          )}
-        </div>
+        <Input
+          type="password"
+          label="Password"
+          name="password"
+          password={password}
+          setPassword={setPassword}
+          error={error}
+        />
 
         <button
           disabled={isLoading}
@@ -149,11 +147,7 @@ export default function Login() {
           )}
         </button>
 
-        {error === "fetch" && (
-          <p className="rounded border-2 border-red-500 bg-red-100 px-4 py-2 text-center text-red-500">
-            Incorrect username or password
-          </p>
-        )}
+        {error === "fetch" && <FormErrors type="fetch" />}
       </form>
     </section>
   );
